@@ -1,11 +1,9 @@
 package dev.codex.tracing;
 
 import org.junit.jupiter.api.AfterEach;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
 
 abstract class AbstractSeleniumSystemTest {
-  protected WebDriver driver;
+  protected TracingSelenideChromeDriver driver;
 
   @AfterEach
   void tearDownDriver() {
@@ -14,24 +12,17 @@ abstract class AbstractSeleniumSystemTest {
     }
   }
 
-  protected WebDriver startChrome() {
-    driver = new ChromeDriver(BrowserTestSupport.chromeOptions());
+  protected TracingSelenideChromeDriver startChrome(String testName) {
+    driver = new TracingSelenideChromeDriver(testName, BrowserTestSupport.chromeOptions());
     return driver;
   }
 
-  protected void runTraced(String testName, ThrowingRunnable runnable) throws Exception {
-    SeleniumTrace.start(testName, driver);
-    Throwable failure = null;
+  protected void runTraced(ThrowingRunnable runnable) throws Exception {
     try {
       runnable.run();
     } catch (Throwable throwable) {
-      failure = throwable;
-      SeleniumTrace.stopFailed(throwable);
+      driver.stopTraceFailed(throwable);
       throw throwable;
-    } finally {
-      if (failure == null && SelenideTrace.currentSession() != null) {
-        SeleniumTrace.stopPassed();
-      }
     }
   }
 
